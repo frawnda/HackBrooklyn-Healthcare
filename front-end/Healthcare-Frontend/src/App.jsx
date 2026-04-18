@@ -1,21 +1,32 @@
 import { useState, useRef } from 'react'
 import './App.css'
 
+
 function App() {
   const [dragActive, setDragActive] = useState(false)
   const [fileName, setFileName] = useState('No file selected')
-  const [analyzing, setAnalyzing] = useState(false)
+ 
+  // 1. Track which specific language is loading (null, 'English', 'Spanish', etc.)
+  const [loadingLanguage, setLoadingLanguage] = useState(null)
+ 
+  // 2. State to store the resulting summary text
+  const [summary, setSummary] = useState('')
+ 
   const fileInputRef = useRef(null)
+
 
   const handleFile = (file) => {
     if (!file) return
     setFileName(file.name)
+    setSummary('') // Reset summary when a new file is picked
   }
+
 
   const handleInputChange = (event) => {
     const file = event.target.files?.[0]
     handleFile(file)
   }
+
 
   const handleDragOver = (event) => {
     event.preventDefault()
@@ -23,11 +34,13 @@ function App() {
     setDragActive(true)
   }
 
+
   const handleDragLeave = (event) => {
     event.preventDefault()
     event.stopPropagation()
     setDragActive(false)
   }
+
 
   const handleDrop = (event) => {
     event.preventDefault()
@@ -37,16 +50,24 @@ function App() {
     handleFile(file)
   }
 
-  const handleAnalyzeClick = () => {
-    setAnalyzing(true)
-    window.setTimeout(() => {
-      setAnalyzing(false)
-    }, 1700)
-  }
 
   const openFileDialog = () => {
     fileInputRef.current?.click()
   }
+
+
+  // 3. Updated handler to take the language name
+  const handleAnalyzeClick = (lang) => {
+    setLoadingLanguage(lang)
+    setSummary('') // Clear old summary while loading
+    window.setTimeout(() => {
+      setLoadingLanguage(null)
+      if (lang === 'English') setSummary('This is your summarized medical bill in English.')
+      if (lang === 'Español') setSummary('Este es el resumen de su factura médica en Español.')
+      if (lang === 'Français') setSummary('Ceci est le résumé de votre facture médicale en Français.')
+    }, 1700)
+  }
+
 
   return (
     <div className="app-container">
@@ -78,6 +99,7 @@ function App() {
         </nav>
       </header>
 
+
       <main>
         <section className="hero-box mb-5 rounded-3 p-5">
           <div className="hero-content">
@@ -85,73 +107,54 @@ function App() {
           </div>
         </section>
 
+
         <section id="analyzer" className="analyzer-card rounded-3 shadow-sm mb-4">
           <div
             className={`drop-zone p-4 text-center rounded-3 ${dragActive ? 'drop-zone-active' : ''}`}
             onDragOver={handleDragOver}
-            onDragEnter={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={openFileDialog}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/pdf,image/*"
-              className="d-none"
-              onChange={handleInputChange}
-            />
+            <input ref={fileInputRef} type="file" className="d-none" onChange={handleInputChange} />
             <div className="drop-zone-content">
               <p className="mb-2 fs-5 fw-semibold">Drag & drop your bill here</p>
-              <p className="mb-0 text-secondary">or click to browse files</p>
-              <p className="mt-3 mb-0 text-truncate text-dark fw-medium">{fileName}</p>
+              <p className="mt-3 text-dark fw-medium">{fileName}</p>
             </div>
           </div>
-        <div class="flex-container d-flex justify-content-around">
-          <div className="text-center mt-4 ">
-            <button
-              className="btn btn-dark btn-lg px-4"
-              type="button"
-              onClick={handleAnalyzeClick}
-              disabled={analyzing}
-            >
-              {analyzing ? 'Translating...' : 'English'}
-            </button>
-          </div>
 
-          <div className="text-center mt-4">
-            <button
-              className="btn btn-dark btn-lg px-4"
-              type="button"
-              onClick={handleAnalyzeClick}
-              disabled={analyzing}
-            >
-              {analyzing ? 'Translating...' : 'Spanish'}
-            </button>
-          </div>
 
-          <div className="text-center mt-4">
-            <button
-              className="btn btn-dark btn-lg px-4"
-              type="button"
-              onClick={handleAnalyzeClick}
-              disabled={analyzing}
-            >
-              {analyzing ? 'Translating...' : 'Chinese'}
-            </button>
+          {/* 5. Button Logic: Check if THIS specific button is the one loading */}
+          <div className="d-flex justify-content-around flex-column flex-md-row gap-3 mt-4">
+            {['English', 'Español', 'Français'].map((lang) => (
+              <button
+                key={lang}
+                className="btn btn-dark fw-bold btn-lg px-4"
+                type="button"
+                onClick={() => handleAnalyzeClick(lang)}
+                disabled={loadingLanguage !== null}
+              >
+                {loadingLanguage === lang ? `Translating to ${lang}...` : lang}
+              </button>
+            ))}
           </div>
-        </div>
         </section>
 
+
+        {/* 6. Results Panel: Only show content if summary exists */}
         <section className="results-panel rounded-3 shadow-sm">
-          <div className="result-item mb-3 p-3 rounded-3 bg-light">
-            <h6 className="mb-1"> Summarized Bill </h6>
-            <p className="mb-0 text-secondary">Estimated total, insurance coverage, and out-of-pocket details.</p>
-          </div>
+          {summary && (
+            <div className="result-item mb-3 p-3 rounded-3 bg-light border-start border-primary border-4">
+              <h6 className="mb-1 fw-bold">Summarized Bill</h6>
+              <p className="mb-0 text-dark">{summary}</p>
+            </div>
+          )}
         </section>
       </main>
     </div>
   )
 }
 
+
 export default App
+
