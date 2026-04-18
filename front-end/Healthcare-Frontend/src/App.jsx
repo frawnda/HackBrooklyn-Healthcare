@@ -1,32 +1,26 @@
 import { useState, useRef } from 'react'
 import './App.css'
 
-
 function App() {
   const [dragActive, setDragActive] = useState(false)
   const [fileName, setFileName] = useState('No file selected')
  
-  // 1. Track which specific language is loading (null, 'English', 'Spanish', etc.)
+  // track which specific language is loading (null, 'English', 'Español', 'Français', etc.)
   const [loadingLanguage, setLoadingLanguage] = useState(null)
- 
-  // 2. State to store the resulting summary text
+  // state to store the resulting summary text
   const [summary, setSummary] = useState('')
- 
   const fileInputRef = useRef(null)
-
 
   const handleFile = (file) => {
     if (!file) return
     setFileName(file.name)
-    setSummary('') // Reset summary when a new file is picked
+    setSummary('') // reset summary when a new file is picked
   }
-
 
   const handleInputChange = (event) => {
     const file = event.target.files?.[0]
     handleFile(file)
   }
-
 
   const handleDragOver = (event) => {
     event.preventDefault()
@@ -34,13 +28,11 @@ function App() {
     setDragActive(true)
   }
 
-
   const handleDragLeave = (event) => {
     event.preventDefault()
     event.stopPropagation()
     setDragActive(false)
   }
-
 
   const handleDrop = (event) => {
     event.preventDefault()
@@ -49,19 +41,18 @@ function App() {
     const file = event.dataTransfer.files?.[0]
     handleFile(file)
   }
-
-
   const openFileDialog = () => {
     fileInputRef.current?.click()
   }
 
-
-  // 3. Updated handler to take the language name
+  // 3. check language being selected
   const handleAnalyzeClick = (lang) => {
     setLoadingLanguage(lang)
-    setSummary('') // Clear old summary while loading
+    setSummary('') // clear the old bill summary while loading
     window.setTimeout(() => {
       setLoadingLanguage(null)
+        {/* setSummary to the RAG summary based on the language*/}
+        {/* need to alert RAG which button was pressed Eng = 1, Esp = 2, Fr = 3*/}
       if (lang === 'English') setSummary('This is your summarized medical bill in English.')
       if (lang === 'Español') setSummary('Este es el resumen de su factura médica en Español.')
       if (lang === 'Français') setSummary('Ceci est le résumé de votre facture médicale en Français.')
@@ -107,7 +98,6 @@ function App() {
           </div>
         </section>
 
-
         <section id="analyzer" className="analyzer-card rounded-3 shadow-sm mb-4">
           <div
             className={`drop-zone p-4 text-center rounded-3 ${dragActive ? 'drop-zone-active' : ''}`}
@@ -116,6 +106,7 @@ function App() {
             onDrop={handleDrop}
             onClick={openFileDialog}
           >
+            {/* user uploads file, send to RAGpreprocessor.py */}
             <input ref={fileInputRef} type="file" className="d-none" onChange={handleInputChange} />
             <div className="drop-zone-content">
               <p className="mb-2 fs-5 fw-semibold">Drag & drop your bill here</p>
@@ -123,8 +114,7 @@ function App() {
             </div>
           </div>
 
-
-          {/* 5. Button Logic: Check if THIS specific button is the one loading */}
+          {/* check if THIS specific button is the one loading */}
           <div className="d-flex justify-content-around flex-column flex-md-row gap-3 mt-4">
             {['English', 'Español', 'Français'].map((lang) => (
               <button
@@ -141,7 +131,7 @@ function App() {
         </section>
 
 
-        {/* 6. Results Panel: Only show content if summary exists */}
+        {/* only show content if summary exists */}
         <section className="results-panel rounded-3 shadow-sm">
           {summary && (
             <div className="result-item mb-3 p-3 rounded-3 bg-light border-start border-primary border-4">
