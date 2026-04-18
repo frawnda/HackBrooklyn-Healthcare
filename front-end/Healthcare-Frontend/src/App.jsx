@@ -4,21 +4,29 @@ import './App.css'
 function App() {
   const [dragActive, setDragActive] = useState(false)
   const [fileName, setFileName] = useState('No file selected')
-  const [fileObject, setFileObject] = useState([null]) 
+  // UPDATED: Now initialized as an empty array
+  const [fileObjects, setFileObjects] = useState([])
   const [loadingLanguage, setLoadingLanguage] = useState(null)
   const [summary, setSummary] = useState('')
   const fileInputRef = useRef(null)
 
-  const handleFile = (file) => {
-    if (!file) return
-    setFileName(file.name)
-    setFileObject(file) 
-    setSummary('') 
+  // UPDATED: Appends new files to the array instead of replacing
+  const handleFile = (newFile) => {
+    if (!newFile) return
+    
+    setFileObjects(prev => [...prev, newFile])
+    
+    // Update display name to show all uploaded files
+    setFileName(prev => 
+      prev === 'No file selected' ? newFile.name : `${prev}, ${newFile.name}`
+    )
+    setSummary('')
   }
 
   const handleInputChange = (event) => {
-    const file = event.target.files?.[0]
-    handleFile(file)
+    // Handle potential multiple selection if the input allowed it
+    const files = Array.from(event.target.files || [])
+    files.forEach(file => handleFile(file))
   }
 
   const handleDragOver = (event) => {
@@ -34,8 +42,9 @@ function App() {
   const handleDrop = (event) => {
     event.preventDefault()
     setDragActive(false)
-    const file = event.dataTransfer.files?.[0]
-    handleFile(file)
+    // Handle multiple dropped files
+    const files = Array.from(event.dataTransfer.files || [])
+    files.forEach(file => handleFile(file))
   }
 
   const openFileDialog = () => {
@@ -43,30 +52,31 @@ function App() {
   }
 
   const handleAnalyzeClick = async (lang) => {
-    if (!fileObject) {
-      alert("Please upload a file first!")
+    // UPDATED: Check array length
+    if (fileObjects.length === 0) {
+      alert("Please upload at least one file!")
       return
     }
 
     setLoadingLanguage(lang)
-    setSummary('') 
+    setSummary('')
 
-    // Prepare the data for Flask
+    // UPDATED: Append all files in the array to the FormData
     const formData = new FormData()
-    formData.append('file', fileObject)
+    fileObjects.forEach((file) => {
+      formData.append('file', file) // Flask's getlist('file') will pick these up
+    })
     formData.append('language', lang)
 
     try {
-      // Direct call to your Flask server
       const response = await fetch('http://localhost:5000/analyze', {
         method: 'POST',
         body: formData,
       })
 
       const data = await response.json()
-      
+     
       if (data.summary) {
-        // This is where the AI result from RAGpreprocessor.py lands
         setSummary(data.summary)
       } else {
         setSummary("Error: " + (data.error || "The server didn't return a summary."))
@@ -79,6 +89,13 @@ function App() {
     }
   }
 
+  // OPTIONAL: Add a reset button to clear files for the next analysis
+  const resetFiles = () => {
+    setFileObjects([])
+    setFileName('No file selected')
+    setSummary('')
+  }
+
   return (
     <div className="app-container">
       <header className="mb-5">
@@ -87,7 +104,7 @@ function App() {
             <a className="navbar-brand fw-bold" href="#">Bill Express</a>
             <div className="collapse navbar-collapse" id="navbarNav">
               <ul className="navbar-nav ms-auto">
-                <li className="nav-item"><a className="nav-link" href="#">Home</a></li>
+                <li className="nav-item"><a className="nav-link" href="#" onClick={resetFiles}>Clear Files</a></li>
               </ul>
             </div>
           </div>
@@ -96,8 +113,8 @@ function App() {
 
       <main className="container">
         <section className="hero-box mb-5 rounded-3 p-5 text-center">
-          <h2 className="text-black mb-3">Medical Bill Analyzer 2</h2>
-          <p className="text-muted">Upload your medical bill and get an instant AI-powered summary in your preferred language.</p>
+          <h2 className="text-black mb-3">Medical Bill Analyzer</h2>
+          <p className="text-muted">You can upload multiple documents!</p>
         </section>
 
         <section id="analyzer" className="analyzer-card rounded-3 shadow-sm mb-4 p-4 bg-white">
@@ -109,11 +126,19 @@ function App() {
             onClick={openFileDialog}
             style={{ border: '2px dashed #ccc', cursor: 'pointer' }}
           >
-            <input ref={fileInputRef} type="file" className="d-none" onChange={handleInputChange} accept="image/*" />
+            {/* Added 'multiple' attribute to allow selecting multiple files at once */}
+            <input 
+                ref={fileInputRef} 
+                type="file" 
+                className="d-none" 
+                onChange={handleInputChange} 
+                accept="image/*" 
+                multiple 
+            />
             <div className="drop-zone-content">
-              <p className="mb-2 fs-5 fw-semibold">Drag & drop your bill here</p>
-              <p className="text-muted">or click to browse files</p>
-              <p className="mt-3 text-primary fw-bold">{fileName}</p>
+              <p className="mb-2 fs-5 fw-semibold">Drag & drop your files here</p>
+              <p className="text-muted">Supports multiple images</p>
+              <p className="mt-3 text-primary fw-bold" style={{fontSize: '0.9rem'}}>{fileName}</p>
             </div>
           </div>
 
@@ -126,7 +151,7 @@ function App() {
                 onClick={() => handleAnalyzeClick(lang)}
                 disabled={loadingLanguage !== null}
               >
-                {loadingLanguage === lang ? `Analyzing...` : lang}
+                {loadingLanguage === lang ? `Analyzing ${fileObjects.length} files...` : lang}
               </button>
             ))}
           </div>

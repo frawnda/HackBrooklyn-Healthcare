@@ -5,7 +5,7 @@ from werkzeug.utils import secure_filename
 from RAGpreprocessor import MedicalBillAnalyzer
 
 app = Flask(__name__)
-CORS(app) # Allows React to talk to Flask
+CORS(app) 
 
 # Configuration
 UPLOAD_FOLDER = 'temp_uploads'
@@ -14,42 +14,51 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 
 # Initialize your analyzer
 analyzer = MedicalBillAnalyzer()
-# Ensure the DB is ready on startup
 analyzer.build_knowledge_base()
 
 @app.route('/analyze', methods=['POST'])
 def analyze_bill():
+    # 1. Use getlist to catch EVERY file sent under the key 'file'
     if 'file' not in request.files:
-        return jsonify({"error": "No file uploaded"}), 400
-    
-    file = request.files['file']
-    # Language is sent as a string (English, Español, Français)
+        return jsonify({"error": "No files uploaded"}), 400
+   
+    uploaded_files = request.files.getlist('file')
     language = request.form.get('language', 'English')
     
-    if file.filename == '':
-        return jsonify({"error": "No selected file"}), 400
-
-    # Save file temporarily
-    filename = secure_filename(file.filename)
-    filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
-    file.save(filepath)
-
+    filepaths = []
+    
     try:
-        # 1. Extract Text using your OCR logic
-        # We pass it as a list because your method expects image_paths array
-        extracted_text = analyzer.extract_text([filepath])
-        
-        # 2. Run RAG Analysis
+        # 2. Loop through the list and save each one
+        for file in uploaded_files:
+            if file.filename == '':
+                continue
+            filename = secure_filename(file.filename)
+            filepath = os.path.join(app.config['UPLOAD_FOLDER'], filename)
+            file.save(filepath)
+            filepaths.append(filepath)
+
+        if not filepaths:
+            return jsonify({"error": "No valid files processed"}), 400
+
+        # 3. Pass the WHOLE list of paths to your OCR logic
+        # Your extract_text method is already built to handle this!
+        extracted_text = analyzer.extract_text(filepaths)
+       
+        # 4. Run RAG Analysis on the combined text
         summary = analyzer.analyze(extracted_text, language)
-        
-        # Cleanup file after processing
-        os.remove(filepath)
-        
+       
+        # 5. Cleanup ALL files after processing
+        for path in filepaths:
+            if os.path.exists(path):
+                os.remove(path)
+       
         return jsonify({"summary": summary})
 
     except Exception as e:
-        if os.path.exists(filepath):
-            os.remove(filepath)
+        # Cleanup any files that were saved before the crash
+        for path in filepaths:
+            if os.path.exists(path):
+                os.remove(path)
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
