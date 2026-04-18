@@ -1,3 +1,49 @@
+.app-container {
+  min-height: 100vh;
+  background: #f8f9fa;
+  padding-bottom: 3rem;
+}
+
 body {
-  background-color: #bcdb2e;
+  background-color: #ffffff;
+}
+
+.hero-box {
+  background: linear-gradient(180deg, #ffffff 0%, #f0f2f7 100%);
+  border: 1px solid #e3e7ef;
+}
+
+.drop-zone {
+  border: 2px dashed #6f42c1;
+  background: #ffffff;
+  cursor: pointer;
+  transition: border-color 0.2s ease, background-color 0.2s ease;
+}
+
+.drop-zone-active {
+  border-color: #563d7c;
+  background-color: #f3f0ff;
+}
+
+.drop-zone-content p {
+  margin-bottom: 0;
+}
+
+.results-panel {
+  background: #ffffff;
+  border: 1px solid #e9ecef;
+}
+
+.result-item {
+  border: 1px solid rgba(108, 117, 125, 0.12);
+}
+
+@media (max-width: 768px) {
+  .navbar-nav {
+    text-align: center;
+  }
+
+  .navbar-nav .nav-item {
+    margin-bottom: 0.5rem;
+  }
 }
