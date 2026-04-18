@@ -40,8 +40,11 @@ class MedicalBillAnalyzer:
         text_splitter = RecursiveCharacterTextSplitter(chunk_size=400, chunk_overlap=50)
         chunks = text_splitter.split_documents(documents)
         
+        # Check if the database folder already exists
         if os.path.exists(self.DB_DIR):
-            shutil.rmtree(self.DB_DIR)
+            print("Knowledge base already exists. Skipping build.")
+            return True
+        print("Building new knowledge base...")
             
         Chroma.from_documents(
             documents=chunks, 

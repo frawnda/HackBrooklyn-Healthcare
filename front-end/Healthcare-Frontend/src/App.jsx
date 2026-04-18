@@ -4,17 +4,16 @@ import './App.css'
 function App() {
   const [dragActive, setDragActive] = useState(false)
   const [fileName, setFileName] = useState('No file selected')
- 
-  // track which specific language is loading (null, 'English', 'Español', 'Français', etc.)
+  const [fileObject, setFileObject] = useState([null]) 
   const [loadingLanguage, setLoadingLanguage] = useState(null)
-  // state to store the resulting summary text
   const [summary, setSummary] = useState('')
   const fileInputRef = useRef(null)
 
   const handleFile = (file) => {
     if (!file) return
     setFileName(file.name)
-    setSummary('') // reset summary when a new file is picked
+    setFileObject(file) 
+    setSummary('') 
   }
 
   const handleInputChange = (event) => {
@@ -24,41 +23,61 @@ function App() {
 
   const handleDragOver = (event) => {
     event.preventDefault()
-    event.stopPropagation()
     setDragActive(true)
   }
 
   const handleDragLeave = (event) => {
     event.preventDefault()
-    event.stopPropagation()
     setDragActive(false)
   }
 
   const handleDrop = (event) => {
     event.preventDefault()
-    event.stopPropagation()
     setDragActive(false)
     const file = event.dataTransfer.files?.[0]
     handleFile(file)
   }
+
   const openFileDialog = () => {
     fileInputRef.current?.click()
   }
 
-  // 3. check language being selected
-  const handleAnalyzeClick = (lang) => {
-    setLoadingLanguage(lang)
-    setSummary('') // clear the old bill summary while loading
-    window.setTimeout(() => {
-      setLoadingLanguage(null)
-        {/* setSummary to the RAG summary based on the language*/}
-        {/* need to alert RAG which button was pressed Eng = 1, Esp = 2, Fr = 3*/}
-      if (lang === 'English') setSummary('This is your summarized medical bill in English.')
-      if (lang === 'Español') setSummary('Este es el resumen de su factura médica en Español.')
-      if (lang === 'Français') setSummary('Ceci est le résumé de votre facture médicale en Français.')
-    }, 1700)
-  }
+  const handleAnalyzeClick = async (lang) => {
+    if (!fileObject) {
+      alert("Please upload a file first!")
+      return
+    }
 
+    setLoadingLanguage(lang)
+    setSummary('') 
+
+    // Prepare the data for Flask
+    const formData = new FormData()
+    formData.append('file', fileObject)
+    formData.append('language', lang)
+
+    try {
+      // Direct call to your Flask server
+      const response = await fetch('http://localhost:5000/analyze', {
+        method: 'POST',
+        body: formData,
+      })
+
+      const data = await response.json()
+      
+      if (data.summary) {
+        // This is where the AI result from RAGpreprocessor.py lands
+        setSummary(data.summary)
+      } else {
+        setSummary("Error: " + (data.error || "The server didn't return a summary."))
+      }
+    } catch (error) {
+      console.error("Analysis failed:", error)
+      setSummary("Failed to connect to the backend server. Make sure app.py is running on port 5000.")
+    } finally {
+      setLoadingLanguage(null)
+    }
+  }
 
   return (
     <div className="app-container">
@@ -66,77 +85,58 @@ function App() {
         <nav className="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
           <div className="container-fluid">
             <a className="navbar-brand fw-bold" href="#">Bill Express</a>
-            <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
-              aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
-              <span className="navbar-toggler-icon" />
-            </button>
             <div className="collapse navbar-collapse" id="navbarNav">
-              <ul className="navbar-nav ms-auto align-items-lg-center">
-                <li className="nav-item">
-                  <a className="nav-link active" aria-current="page" href="#">Home</a>
-                </li>
-                <li className="nav-item">
-                  <a className="nav-link" href="#analyzer">Analyzer</a>
-                </li>
-                <li className="nav-item">
-                  <a className="nav-link" href="#support">Support</a>
-                </li>
-                <li className="nav-item ms-lg-3">
-                  <button className="btn btn-dark btn-sm" type="button">Login</button>
-                </li>
+              <ul className="navbar-nav ms-auto">
+                <li className="nav-item"><a className="nav-link" href="#">Home</a></li>
               </ul>
             </div>
           </div>
         </nav>
       </header>
 
-
-      <main>
-        <section className="hero-box mb-5 rounded-3 p-5">
-          <div className="hero-content">
-            <h2 className="text-black mb-3">Medical Bill Analyzer</h2>
-          </div>
+      <main className="container">
+        <section className="hero-box mb-5 rounded-3 p-5 text-center">
+          <h2 className="text-black mb-3">Medical Bill Analyzer 2</h2>
+          <p className="text-muted">Upload your medical bill and get an instant AI-powered summary in your preferred language.</p>
         </section>
 
-        <section id="analyzer" className="analyzer-card rounded-3 shadow-sm mb-4">
+        <section id="analyzer" className="analyzer-card rounded-3 shadow-sm mb-4 p-4 bg-white">
           <div
-            className={`drop-zone p-4 text-center rounded-3 ${dragActive ? 'drop-zone-active' : ''}`}
+            className={`drop-zone p-5 text-center rounded-3 ${dragActive ? 'drop-zone-active' : ''}`}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={openFileDialog}
+            style={{ border: '2px dashed #ccc', cursor: 'pointer' }}
           >
-            {/* user uploads file, send to RAGpreprocessor.py */}
-            <input ref={fileInputRef} type="file" className="d-none" onChange={handleInputChange} />
+            <input ref={fileInputRef} type="file" className="d-none" onChange={handleInputChange} accept="image/*" />
             <div className="drop-zone-content">
               <p className="mb-2 fs-5 fw-semibold">Drag & drop your bill here</p>
-              <p className="mt-3 text-dark fw-medium">{fileName}</p>
+              <p className="text-muted">or click to browse files</p>
+              <p className="mt-3 text-primary fw-bold">{fileName}</p>
             </div>
           </div>
 
-          {/* check if THIS specific button is the one loading */}
-          <div className="d-flex justify-content-around flex-column flex-md-row gap-3 mt-4">
+          <div className="d-flex justify-content-center flex-column flex-md-row gap-3 mt-4">
             {['English', 'Español', 'Français'].map((lang) => (
               <button
                 key={lang}
-                className="btn btn-dark fw-bold btn-lg px-4"
+                className="btn btn-dark fw-bold btn-lg px-5"
                 type="button"
                 onClick={() => handleAnalyzeClick(lang)}
                 disabled={loadingLanguage !== null}
               >
-                {loadingLanguage === lang ? `Translating to ${lang}...` : lang}
+                {loadingLanguage === lang ? `Analyzing...` : lang}
               </button>
             ))}
           </div>
         </section>
 
-
-        {/* only show content if summary exists */}
-        <section className="results-panel rounded-3 shadow-sm">
+        <section className="results-panel">
           {summary && (
-            <div className="result-item mb-3 p-3 rounded-3 bg-light border-start border-4" style={{borderLeftColor: '#9e9ec4'}}>
-              <h6 className="mb-1 fw-bold">Summarized Bill</h6>
-              <p className="mb-0 text-dark">{summary}</p>
+            <div className="result-item mb-5 p-4 rounded-3 bg-white shadow-sm border-start border-4" style={{borderLeftColor: '#563d7c'}}>
+              <h6 className="mb-3 fw-bold text-uppercase text-muted" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>Analysis Results</h6>
+              <p className="mb-0 text-dark" style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>{summary}</p>
             </div>
           )}
         </section>
@@ -145,6 +145,4 @@ function App() {
   )
 }
 
-
 export default App
-
