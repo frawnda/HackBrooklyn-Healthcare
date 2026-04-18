@@ -107,8 +107,8 @@ function App() {
               <p className="mt-3 mb-0 text-truncate text-dark fw-medium">{fileName}</p>
             </div>
           </div>
-
-          <div className="text-center mt-4">
+        <div class="flex-container d-flex justify-content-around">
+          <div className="text-center mt-4 ">
             <button
               className="btn btn-dark btn-lg px-4"
               type="button"
@@ -140,6 +140,7 @@ function App() {
               {analyzing ? 'Translating...' : 'Chinese'}
             </button>
           </div>
+        </div>
         </section>
 
         <section className="results-panel rounded-3 shadow-sm">

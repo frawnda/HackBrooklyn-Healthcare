@@ -13,7 +13,7 @@ body {
 
 
 .drop-zone {
-  border: 2px dashed #6f42c1;
+  border: 2px dashed;
   background: #ffffff;
   cursor: pointer;
   transition: border-color 0.2s ease, background-color 0.2s ease;
