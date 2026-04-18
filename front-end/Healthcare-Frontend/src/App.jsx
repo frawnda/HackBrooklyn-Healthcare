@@ -134,7 +134,7 @@ function App() {
         {/* only show content if summary exists */}
         <section className="results-panel rounded-3 shadow-sm">
           {summary && (
-            <div className="result-item mb-3 p-3 rounded-3 bg-light border-start border-primary border-4">
+            <div className="result-item mb-3 p-3 rounded-3 bg-light border-start border-4" style={{borderLeftColor: '#9e9ec4'}}>
               <h6 className="mb-1 fw-bold">Summarized Bill</h6>
               <p className="mb-0 text-dark">{summary}</p>
             </div>
