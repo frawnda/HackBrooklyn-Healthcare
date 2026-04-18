@@ -4,12 +4,17 @@ import './App.css'
 function App() {
   const [dragActive, setDragActive] = useState(false)
   const [fileName, setFileName] = useState('No file selected')
-  const [analyzing, setAnalyzing] = useState(false)
+ 
+  // track which specific language is loading (null, 'English', 'Español', 'Français', etc.)
+  const [loadingLanguage, setLoadingLanguage] = useState(null)
+  // state to store the resulting summary text
+  const [summary, setSummary] = useState('')
   const fileInputRef = useRef(null)
 
   const handleFile = (file) => {
     if (!file) return
     setFileName(file.name)
+    setSummary('') // reset summary when a new file is picked
   }
 
   const handleInputChange = (event) => {
@@ -36,17 +41,24 @@ function App() {
     const file = event.dataTransfer.files?.[0]
     handleFile(file)
   }
-
-  const handleAnalyzeClick = () => {
-    setAnalyzing(true)
-    window.setTimeout(() => {
-      setAnalyzing(false)
-    }, 1700)
-  }
-
   const openFileDialog = () => {
     fileInputRef.current?.click()
   }
+
+  // 3. check language being selected
+  const handleAnalyzeClick = (lang) => {
+    setLoadingLanguage(lang)
+    setSummary('') // clear the old bill summary while loading
+    window.setTimeout(() => {
+      setLoadingLanguage(null)
+        {/* setSummary to the RAG summary based on the language*/}
+        {/* need to alert RAG which button was pressed Eng = 1, Esp = 2, Fr = 3*/}
+      if (lang === 'English') setSummary('This is your summarized medical bill in English.')
+      if (lang === 'Español') setSummary('Este es el resumen de su factura médica en Español.')
+      if (lang === 'Français') setSummary('Ceci est le résumé de votre facture médicale en Français.')
+    }, 1700)
+  }
+
 
   return (
     <div className="app-container">
@@ -78,6 +90,7 @@ function App() {
         </nav>
       </header>
 
+
       <main>
         <section className="hero-box mb-5 rounded-3 p-5">
           <div className="hero-content">
@@ -89,58 +102,49 @@ function App() {
           <div
             className={`drop-zone p-4 text-center rounded-3 ${dragActive ? 'drop-zone-active' : ''}`}
             onDragOver={handleDragOver}
-            onDragEnter={handleDragOver}
             onDragLeave={handleDragLeave}
             onDrop={handleDrop}
             onClick={openFileDialog}
           >
-            <input
-              ref={fileInputRef}
-              type="file"
-              accept="application/pdf,image/*"
-              className="d-none"
-              onChange={handleInputChange}
-            />
+            {/* user uploads file, send to RAGpreprocessor.py */}
+            <input ref={fileInputRef} type="file" className="d-none" onChange={handleInputChange} />
             <div className="drop-zone-content">
               <p className="mb-2 fs-5 fw-semibold">Drag & drop your bill here</p>
-              <p className="mb-0 text-secondary">or click to browse files</p>
-              <p className="mt-3 mb-0 text-truncate text-dark fw-medium">{fileName}</p>
+              <p className="mt-3 text-dark fw-medium">{fileName}</p>
             </div>
           </div>
 
-          <div className="text-center mt-4">
-            <button
-              className="btn btn-dark btn-lg px-4"
-              type="button"
-              onClick={handleAnalyzeClick}
-              disabled={analyzing}
-            >
-              {analyzing ? 'Analyzing Bill...' : 'Analyze Bill'}
-            </button>
+          {/* check if THIS specific button is the one loading */}
+          <div className="d-flex justify-content-around flex-column flex-md-row gap-3 mt-4">
+            {['English', 'Español', 'Français'].map((lang) => (
+              <button
+                key={lang}
+                className="btn btn-dark fw-bold btn-lg px-4"
+                type="button"
+                onClick={() => handleAnalyzeClick(lang)}
+                disabled={loadingLanguage !== null}
+              >
+                {loadingLanguage === lang ? `Translating to ${lang}...` : lang}
+              </button>
+            ))}
           </div>
         </section>
 
+
+        {/* only show content if summary exists */}
         <section className="results-panel rounded-3 shadow-sm">
-          <div className="result-item mb-3 p-3 rounded-3 bg-light">
-            <h6 className="mb-1">Charge Summary</h6>
-            <p className="mb-0 text-secondary">Estimated total, insurance coverage, and out-of-pocket details.</p>
-          </div>
-          <div className="result-item mb-3 p-3 rounded-3 bg-light">
-            <h6 className="mb-1">Policy Match</h6>
-            <p className="mb-0 text-secondary">Check billing items against your plan benefits.</p>
-          </div>
-          <div className="result-item mb-3 p-3 rounded-3 bg-light">
-            <h6 className="mb-1">Possible Savings</h6>
-            <p className="mb-0 text-secondary">Alerts for duplicate charges or unusual fees.</p>
-          </div>
-          <div className="result-item p-3 rounded-3 bg-light">
-            <h6 className="mb-1">Next Steps</h6>
-            <p className="mb-0 text-secondary">Review recommendations or upload another bill.</p>
-          </div>
+          {summary && (
+            <div className="result-item mb-3 p-3 rounded-3 bg-light border-start border-primary border-4">
+              <h6 className="mb-1 fw-bold">Summarized Bill</h6>
+              <p className="mb-0 text-dark">{summary}</p>
+            </div>
+          )}
         </section>
       </main>
     </div>
   )
 }
 
+
 export default App
+
