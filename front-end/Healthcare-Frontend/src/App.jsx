@@ -53,7 +53,7 @@ function App() {
       <header className="mb-5">
         <nav className="navbar navbar-expand-lg navbar-light bg-light shadow-sm">
           <div className="container-fluid">
-            <a className="navbar-brand fw-bold" href="#">HealthPay</a>
+            <a className="navbar-brand fw-bold" href="#">Bill Express</a>
             <button className="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav"
               aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
               <span className="navbar-toggler-icon" />
@@ -78,15 +78,14 @@ function App() {
         </nav>
       </header>
 
-      <main className="container">
-        <section className="hero-box mb-5 p-4 rounded-3 shadow-sm">
+      <main>
+        <section className="hero-box mb-5 rounded-3 p-5">
           <div className="hero-content">
-            <h2 className="mb-3">Medical Bill Analyzer</h2>
-            <p className="text-muted mb-0">Upload or drag a medical bill to identify services, charges, and savings opportunities.</p>
+            <h2 className="text-black mb-3">Medical Bill Analyzer</h2>
           </div>
         </section>
 
-        <section id="analyzer" className="analyzer-card p-4 rounded-3 shadow-sm mb-4">
+        <section id="analyzer" className="analyzer-card rounded-3 shadow-sm mb-4">
           <div
             className={`drop-zone p-4 text-center rounded-3 ${dragActive ? 'drop-zone-active' : ''}`}
             onDragOver={handleDragOver}
@@ -121,7 +120,7 @@ function App() {
           </div>
         </section>
 
-        <section className="results-panel p-4 rounded-3 shadow-sm">
+        <section className="results-panel rounded-3 shadow-sm">
           <div className="result-item mb-3 p-3 rounded-3 bg-light">
             <h6 className="mb-1">Charge Summary</h6>
             <p className="mb-0 text-secondary">Estimated total, insurance coverage, and out-of-pocket details.</p>
