@@ -115,27 +115,37 @@ function App() {
               onClick={handleAnalyzeClick}
               disabled={analyzing}
             >
-              {analyzing ? 'Analyzing Bill...' : 'Analyze Bill'}
+              {analyzing ? 'Translating...' : 'English'}
+            </button>
+          </div>
+
+          <div className="text-center mt-4">
+            <button
+              className="btn btn-dark btn-lg px-4"
+              type="button"
+              onClick={handleAnalyzeClick}
+              disabled={analyzing}
+            >
+              {analyzing ? 'Translating...' : 'Spanish'}
+            </button>
+          </div>
+
+          <div className="text-center mt-4">
+            <button
+              className="btn btn-dark btn-lg px-4"
+              type="button"
+              onClick={handleAnalyzeClick}
+              disabled={analyzing}
+            >
+              {analyzing ? 'Translating...' : 'Chinese'}
             </button>
           </div>
         </section>
 
         <section className="results-panel rounded-3 shadow-sm">
           <div className="result-item mb-3 p-3 rounded-3 bg-light">
-            <h6 className="mb-1">Charge Summary</h6>
+            <h6 className="mb-1"> Summarized Bill </h6>
             <p className="mb-0 text-secondary">Estimated total, insurance coverage, and out-of-pocket details.</p>
-          </div>
-          <div className="result-item mb-3 p-3 rounded-3 bg-light">
-            <h6 className="mb-1">Policy Match</h6>
-            <p className="mb-0 text-secondary">Check billing items against your plan benefits.</p>
-          </div>
-          <div className="result-item mb-3 p-3 rounded-3 bg-light">
-            <h6 className="mb-1">Possible Savings</h6>
-            <p className="mb-0 text-secondary">Alerts for duplicate charges or unusual fees.</p>
-          </div>
-          <div className="result-item p-3 rounded-3 bg-light">
-            <h6 className="mb-1">Next Steps</h6>
-            <p className="mb-0 text-secondary">Review recommendations or upload another bill.</p>
           </div>
         </section>
       </main>
