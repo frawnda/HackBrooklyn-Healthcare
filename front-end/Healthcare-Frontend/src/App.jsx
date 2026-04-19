@@ -8,6 +8,7 @@ function App() {
   const [fileObjects, setFileObjects] = useState([])
   const [loadingLanguage, setLoadingLanguage] = useState(null)
   const [summary, setSummary] = useState('')
+  const [isTranscribing, setIsTranscribing] = useState(false)
   const fileInputRef = useRef(null)
 
   // UPDATED: Appends new files to the array instead of replacing
@@ -96,6 +97,16 @@ function App() {
     setSummary('')
   }
 
+  const handleTranscribe = () => {
+    if (fileObjects.length === 0) {
+      alert("Please upload at least one file!")
+      return
+    }
+    setIsTranscribing(true)
+    // TODO: Add transcription logic here
+    // For now, this just demonstrates the UI state change
+  }
+
   return (
     <div className="app-container">
       <header className="mb-5">
@@ -142,7 +153,7 @@ function App() {
             </div>
           </div>
 
-          <div className="d-flex justify-content-center flex-column flex-md-row gap-3 mt-4">
+          <div className="d-flex justify-content-center flex-column flex-md-row gap-3 mt-4 align-items-center">
             {['English', 'Español', 'Français'].map((lang) => (
               <button
                 key={lang}
@@ -154,6 +165,13 @@ function App() {
                 {loadingLanguage === lang ? `Analyzing ${fileObjects.length} files...` : lang}
               </button>
             ))}
+            <button
+              className="btn btn-dark fw-bold btn-lg px-5"
+              type="button"
+              onClick={handleTranscribe}
+            >
+              {isTranscribing ? 'Transcribe' : 'Transcribing...'}
+            </button>
           </div>
         </section>
 
