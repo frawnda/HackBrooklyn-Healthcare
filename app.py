@@ -3,6 +3,7 @@ from flask import Flask, request, jsonify
 from flask_cors import CORS
 from werkzeug.utils import secure_filename
 from RAGpreprocessor import MedicalBillAnalyzer
+from eleven_labs_script import VoiceService
 
 app = Flask(__name__)
 CORS(app) 
@@ -15,6 +16,27 @@ app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 # Initialize your analyzer
 analyzer = MedicalBillAnalyzer()
 analyzer.build_knowledge_base()
+
+# Initialize the service
+voice_service = VoiceService(api_key="6d0863dcbe40ba46e40e18b6bb52dcb9a7e2275ea1c405ef1c6e97e28428eeb0")
+
+@app.route('/transcribe', methods=['POST'])
+def transcribe_summary():
+
+    data = request.json
+    text = data.get('text')
+    language = data.get('language', 'English')
+
+    if not text:
+        return jsonify({"error": "No text provided"}), 400
+
+    # Generate audio file
+    audio_url = voice_service.generate_audio(text, language)
+    
+    if audio_url:
+        return jsonify({"audio_url": audio_url})
+    else:
+        return jsonify({"error": "Voice generation failed"}), 500
 
 @app.route('/analyze', methods=['POST'])
 def analyze_bill():

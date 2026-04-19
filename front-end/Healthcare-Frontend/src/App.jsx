@@ -2,6 +2,8 @@ import { useState, useRef } from 'react'
 import './App.css'
 
 function App() {
+  const [audioUrl, setAudioUrl] = useState(null);
+  const [currentLanguage, setCurrentLanguage] = useState('English'); // Track the last used language
   const [dragActive, setDragActive] = useState(false)
   const [fileName, setFileName] = useState('No file selected')
   // UPDATED: Now initialized as an empty array
@@ -56,11 +58,13 @@ function App() {
     // UPDATED: Check array length
     if (fileObjects.length === 0) {
       alert("Please upload at least one file!")
-      return
+      return;
     }
 
     setLoadingLanguage(lang)
     setSummary('')
+    setAudioUrl(null)
+    setCurrentLanguage(lang);
 
     // UPDATED: Append all files in the array to the FormData
     const formData = new FormData()
@@ -97,15 +101,32 @@ function App() {
     setSummary('')
   }
 
-  const handleTranscribe = () => {
+  const handleTranscribe = async () => {
     if (fileObjects.length === 0) {
       alert("Please upload at least one file!")
-      return
+      return;
     }
-    setIsTranscribing(true)
-    // TODO: Add transcription logic here
-    // For now, this just demonstrates the UI state change
-  }
+    setIsTranscribing(true);
+    try {
+      const response = await fetch('http://localhost:5000/transcribe', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ 
+          text: summary,
+          language: currentLanguage 
+        }),
+      });
+
+      const data = await response.json();
+      if (data.audio_url) {
+        setAudioUrl(data.audio_url);
+      }
+    } catch (error) {
+      console.error("Transcription failed:", error);
+    } finally {
+      setIsTranscribing(false);
+    }
+  };
 
   return (
     <div className="app-container">
@@ -169,8 +190,9 @@ function App() {
               className="btn btn-dark fw-bold btn-lg px-5"
               type="button"
               onClick={handleTranscribe}
+              disabled={isTranscribing || !summary}
             >
-              {isTranscribing ? 'Transcribe' : 'Transcribing...'}
+              {isTranscribing ? 'Generating Audio...' : 'Play Audio'}
             </button>
           </div>
         </section>
@@ -179,7 +201,17 @@ function App() {
           {summary && (
             <div className="result-item mb-5 p-4 rounded-3 bg-white shadow-sm border-start border-4" style={{borderLeftColor: '#563d7c'}}>
               <h6 className="mb-3 fw-bold text-uppercase text-muted" style={{ fontSize: '0.8rem', letterSpacing: '1px' }}>Analysis Results</h6>
-              <p className="mb-0 text-dark" style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>{summary}</p>
+              <p className="mb-0 text-dark" style={{ whiteSpace: 'pre-line', lineHeight: '1.6' }}>
+                {summary}
+              </p>
+
+              {audioUrl && (
+                <div className="mt-3">
+                  <audio controls key={audioUrl}>
+                    <source src={`http://localhost:5000${audioUrl}`} type="audio/mpeg" />
+                  </audio>
+                </div>
+              )}
             </div>
           )}
         </section>
